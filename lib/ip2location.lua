@@ -14,6 +14,8 @@ ip2location = {
   ipv4databaseaddr = 0,
   ipv6databasecount = 0,
   ipv6databaseaddr = 0,
+  ipv4indexed = false,
+  ipv6indexed = false,
   ipv4indexbaseaddr = 0,
   ipv6indexbaseaddr = 0,
   ipv4columnsize = 0,
@@ -124,7 +126,7 @@ local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
 local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
 
-local api_version = "8.5.0"
+local api_version = "8.6.0"
 
 local modes = {
   countryshort = 0x000001,
@@ -160,14 +162,21 @@ local invalid_bin = "Incorrect IP2Location BIN file format. Please make sure tha
 
 -- for debugging purposes
 -- local function printme(stuff)
-  -- local inspect = require('inspect')
-  -- print(inspect(stuff))
+-- local inspect = require('inspect')
+-- print(inspect(stuff))
 -- end
 
 -- local function printmestr(stuff)
-  -- local inspect = require('inspect')
-  -- return (inspect(stuff))
+-- local inspect = require('inspect')
+-- return (inspect(stuff))
 -- end
+
+-- read row
+local function readrow(myfile, pos, len)
+  myfile:seek("set", pos - 1)
+  local bytestr = myfile:read(len)
+  return bytestr
+end
 
 -- read byte
 local function readuint8(pos, myfile)
@@ -180,11 +189,34 @@ local function readuint8(pos, myfile)
   return value
 end
 
+-- read byte
+local function readuint8header(pos, row)
+  local pos2 = pos + 1 -- due to index starting with 1
+  local bytestr = row:sub(pos2, pos2)
+  local value = 0 -- no need BigNum
+  if bytestr ~= nil then
+    value = string.byte(bytestr)
+  end
+  return value
+end
+
 -- read unsigned 32-bit integer
 local function readuint32(pos, myfile)
   myfile:seek("set", pos - 1)
   local bytestr = myfile:read(4)
   local value = bn.new(0)
+  if bytestr ~= nil then
+    local bytes = { bytestr:byte(1, 4) }
+    value = bytes_to_int(bytes)
+  end
+  return value
+end
+
+-- read unsigned 32-bit integer
+local function readuint32header(pos, row)
+  local pos2 = pos + 1 -- due to index starting with 1
+  local bytestr = row:sub(pos2, pos2 + 3)
+  local value = 0 -- no need BigNum
   if bytestr ~= nil then
     local bytes = { bytestr:byte(1, 4) }
     value = bytes_to_int(bytes)
@@ -216,6 +248,18 @@ local function readuint128(pos, myfile)
   return value
 end
 
+-- read unsigned 128-bit integer
+local function readuint128row(pos, row)
+  local pos2 = pos + 1 -- due to index starting with 1
+  local bytestr = row:sub(pos2, pos2 + 15)
+  local value = bn.new(0)
+  if bytestr ~= nil then
+    local bytes = { bytestr:byte(1, 16) }
+    value = bytes_to_int(bytes)
+  end
+  return value
+end
+
 function bytes_to_int(bytearr)
   local value = bn.new(0)
   for i = 1, #bytearr, 1 do
@@ -227,13 +271,13 @@ end
 -- read string
 local function readstr(pos, myfile)
   myfile:seek("set", pos)
-  local len = myfile:read(1)
+  local data = myfile:read(256) -- max size of string field + 1 byte for length
   local strlen = 0
+  local len = data:sub(1, 1)
   if len ~= nil then
     strlen = string.byte(len)
   end
-  myfile:seek("set", pos + 1)
-  local bytestr = myfile:read(strlen)
+  local bytestr = data:sub(2, (strlen + 1))
   local value = ''
   if bytestr ~= nil then
     value = bytestr
@@ -266,25 +310,36 @@ function ip2location:new(dbpath)
   else
     x.f = file
   end
-  x.databasetype = readuint8(1, x.f)
-  x.databasecolumn = readuint8(2, x.f)
-  x.databaseyear = readuint8(3, x.f)
-  x.databasemonth = readuint8(4, x.f)
-  x.databaseday = readuint8(5, x.f)
 
-  x.ipv4databasecount = readuint32(6, x.f):to_number()
-  x.ipv4databaseaddr = readuint32(10, x.f):to_number()
-  x.ipv6databasecount = readuint32(14, x.f):to_number()
-  x.ipv6databaseaddr = readuint32(18, x.f):to_number()
-  x.ipv4indexbaseaddr = readuint32(22, x.f):to_number()
-  x.ipv6indexbaseaddr = readuint32(26, x.f):to_number()
-  x.productcode = readuint8(30, x.f)
-  x.producttype = readuint8(31, x.f)
-  x.filesize = readuint32(32, x.f):to_number()
+  local row = readrow(x.f, 1, 64) -- 64-byte header
+
+  x.databasetype = readuint8header(0, row)
+  x.databasecolumn = readuint8header(1, row)
+  x.databaseyear = readuint8header(2, row)
+  x.databasemonth = readuint8header(3, row)
+  x.databaseday = readuint8header(4, row)
+
+  x.ipv4databasecount = readuint32header(5, row)
+  x.ipv4databaseaddr = readuint32header(9, row)
+  x.ipv6databasecount = readuint32header(13, row)
+  x.ipv6databaseaddr = readuint32header(17, row)
+  x.ipv4indexbaseaddr = readuint32header(21, row)
+  x.ipv6indexbaseaddr = readuint32header(25, row)
+  x.productcode = readuint8header(29, row)
+  x.producttype = readuint8header(30, row)
+  x.filesize = readuint32header(31, row)
 
   -- check if is correct BIN (should be 1 for IP2Location BIN file), also checking for zipped file (PK being the first 2 chars)
   if (x.productcode ~= 1 and x.databaseyear >= 21) or (x.databasetype == 80 and x.databasecolumn == 75) then -- only BINs from Jan 2021 onwards have this byte set
     error(invalid_bin)
+  end
+
+  if x.ipv4indexbaseaddr > 0 then
+    x.ipv4indexed = true
+  end
+
+  if x.ipv6databasecount > 0 and x.ipv6indexbaseaddr > 0 then
+    x.ipv6indexed = true
   end
 
   x.ipv4columnsize = x.databasecolumn * 4 -- 4 bytes each column
@@ -401,7 +456,7 @@ function ip2location:checkip(ip)
     local ipnum = bn.new(tonumber(res))
 
     local ipindex = 0;
-    if self.ipv4indexbaseaddr > 0 then
+    if self.ipv4indexed then
       ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
     end
     return R.IPV4, ipnum, ipindex
@@ -419,7 +474,7 @@ function ip2location:checkip(ip)
     end
 
     local ipindex = 0;
-    if self.ipv4indexbaseaddr > 0 then
+    if self.ipv4indexed then
       ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
     end
     return R.IPV4, ipnum, ipindex
@@ -437,7 +492,7 @@ function ip2location:checkip(ip)
     end
 
     local ipindex = 0;
-    if self.ipv4indexbaseaddr > 0 then
+    if self.ipv4indexed then
       ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
     end
     return R.IPV4, ipnum, ipindex
@@ -471,12 +526,12 @@ function ip2location:checkip(ip)
 
     local ipindex = 0;
     if override == 1 then
-      if self.ipv4indexbaseaddr > 0 then
+      if self.ipv4indexed then
         ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
       end
       return R.IPV4, ipnum, ipindex
     else
-      if self.ipv6indexbaseaddr > 0 then
+      if self.ipv6indexed then
         ipindex = ipnum:rshift(112):lshift(3):to_number() + self.ipv6indexbaseaddr
       end
       return R.IPV6, ipnum, ipindex
@@ -552,11 +607,13 @@ function ip2location:query(ipaddress, mode)
   local high = 0
   local mid = 0
   local rowoffset = 0
-  local rowoffset2 = 0
   local ipfrom = bn.new(0)
   local ipto = bn.new(0)
   local maxip = bn.new(0)
-  local firstcol = 4
+  local firstcol = 4 -- 4 bytes for IP From
+  local fullrow
+  local row
+  local readlen = 0
 
   -- printme(self)
 
@@ -566,6 +623,7 @@ function ip2location:query(ipaddress, mode)
     maxip = max_ipv4_range
     colsize = self.ipv4columnsize
   else
+    firstcol = 16 -- 16 bytes for IP From    
     baseaddr = self.ipv6databaseaddr
     high = self.ipv6databasecount
     maxip = max_ipv6_range
@@ -574,8 +632,9 @@ function ip2location:query(ipaddress, mode)
 
   -- reading index
   if ipindex > 0 then
-    low = readuint32(ipindex, self.f):to_number()
-    high = readuint32(ipindex + 4, self.f):to_number()
+    row = readrow(self.f, ipindex, 8) -- 4 bytes for each IP From/To
+    low = readuint32row(0, row):asnumber()
+    high = readuint32row(4, row):asnumber()
   end
 
   if ipno >= maxip then
@@ -585,23 +644,22 @@ function ip2location:query(ipaddress, mode)
   while low <= high do
     mid = round((low + high) / 2)
     rowoffset = baseaddr + (mid * colsize)
-    rowoffset2 = rowoffset + colsize
+
+    -- reading IP From + whole row + next IP From
+    readlen = colsize + firstcol
+    fullrow = readrow(self.f, rowoffset, readlen)
 
     if iptype == 4 then
-      ipfrom = readuint32(rowoffset, self.f)
-      ipto = readuint32(rowoffset2, self.f)
+      ipfrom = readuint32row(0, fullrow)
+      ipto = readuint32row(colsize, fullrow)
     else
-      ipfrom = readuint128(rowoffset, self.f)
-      ipto = readuint128(rowoffset2, self.f)
+      ipfrom = readuint128row(0, fullrow)
+      ipto = readuint128row(colsize, fullrow)
     end
 
     if (ipno >= ipfrom) and (ipno < ipto) then
-      if iptype == 6 then
-        firstcol = 16
-      end
-
-      self.f:seek("set", rowoffset + firstcol - 1)
-      local row = self.f:read(self.columnsize_without_ip)
+      rowlen = colsize - firstcol
+      row = fullrow:sub(firstcol + 1, (firstcol + rowlen + 1)) -- extract the actual row data
 
       if (bit.band(mode, modes.countryshort) == 1) and (self.country_enabled == true) then
         result.country_short = readstr(readuint32row(self.country_position_offset, row):to_number(), self.f)
