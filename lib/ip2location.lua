@@ -126,7 +126,7 @@ local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
 local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
 
-local api_version = "8.6.0"
+local api_version = "8.6.1"
 
 local modes = {
   countryshort = 0x000001,
@@ -219,7 +219,7 @@ local function readuint32header(pos, row)
   local value = 0 -- no need BigNum
   if bytestr ~= nil then
     local bytes = { bytestr:byte(1, 4) }
-    value = bytes_to_int(bytes)
+    value = bytes_to_int(bytes):to_number()
   end
   return value
 end
@@ -633,8 +633,8 @@ function ip2location:query(ipaddress, mode)
   -- reading index
   if ipindex > 0 then
     row = readrow(self.f, ipindex, 8) -- 4 bytes for each IP From/To
-    low = readuint32row(0, row):asnumber()
-    high = readuint32row(4, row):asnumber()
+    low = readuint32row(0, row):to_number()
+    high = readuint32row(4, row):to_number()
   end
 
   if ipno >= maxip then
