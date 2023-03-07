@@ -103,6 +103,7 @@ local from_6to4 = bn.from_dec("42545680458834377588178886921629466624")
 local to_6to4 = bn.from_dec("42550872755692912415807417417958686719")
 local from_teredo = bn.from_dec("42540488161975842760550356425300246528")
 local to_teredo = bn.from_dec("42540488241204005274814694018844196863")
+local excess = bn.from_hex("FFFFFFFF00000000")
 
 local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
 local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
@@ -126,7 +127,7 @@ local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
 local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
 
-local api_version = "8.6.2"
+local api_version = "8.6.3"
 
 local modes = {
   countryshort = 0x000001,
@@ -518,6 +519,9 @@ function ip2location:checkip(ip)
       ipnum = ipnum:rshift(80)
       ipnum2 = bit.band(ipnum:to_number(), 0xffffffff)
       ipnum = bn.new(ipnum2) -- convert back to bn
+      if ipnum >= excess then -- overflow
+        ipnum = ipnum - excess
+      end
     elseif ipnum >= from_teredo and ipnum <= to_teredo then -- Teredo
       override = 1
       ipnum2 = bit.bnot(teredopart)

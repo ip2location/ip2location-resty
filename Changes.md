@@ -1,5 +1,9 @@
 # Revision history for ip2location
 
+## 8.6.3  -- 2023-03-07
+
+* Fixed overflow issue.
+
 ## 8.6.2  -- 2022-07-26
 
 * Fixed undeclared variable.
