@@ -1,5 +1,9 @@
 # Revision history for ip2location
 
+## 8.7.0  -- 2023-04-13
+
+* Added support for district, ASN and AS.
+
 ## 8.6.3  -- 2023-03-07
 
 * Fixed overflow issue.

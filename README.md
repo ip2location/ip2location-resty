@@ -1,6 +1,6 @@
 # IP2Location OpenResty Package
 
-This OpenResty package provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type and IAB category from IP address by using IP2Location database. This package uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type and IAB category as values. It supports both IP address in IPv4 and IPv6.
+This OpenResty package provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) from IP address by using IP2Location database. This package uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) as values. It supports both IP address in IPv4 and IPv6.
 
 This package can be used in many types of projects such as:
 
@@ -71,6 +71,9 @@ Below are the methods supported in this package.
 |get_usagetype|Returns the usage type.|
 |get_addresstype|Returns the address type.|
 |get_category|Returns the IAB category.|
+|get_district|Returns the district name.|
+|get_asn|Returns the autonomous system number (ASN).|
+|get_as|Returns the autonomous system (AS).|
 |close|Closes BIN file and resets metadata.|
 
 ## Usage
@@ -88,7 +91,7 @@ http {
             default_type text/html;
             content_by_lua_block {
                 local ip2location = require('ip2location')
-                local ip2loc = ip2location:new('/usr/local/ip2location/IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-TIMEZONE-ISP-DOMAIN-NETSPEED-AREACODE-WEATHER-MOBILE-ELEVATION-USAGETYPE-ADDRESSTYPE-CATEGORY.BIN')
+                local ip2loc = ip2location:new('/usr/local/ip2location/IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-TIMEZONE-ISP-DOMAIN-NETSPEED-AREACODE-WEATHER-MOBILE-ELEVATION-USAGETYPE-ADDRESSTYPE-CATEGORY-DISTRICT-ASN.BIN')
                 local result = ip2loc:get_all('8.8.8.8')
                 ngx.say("country_short: " .. result.country_short)
                 ngx.say("country_long: " .. result.country_long)
@@ -112,6 +115,9 @@ http {
                 ngx.say("usagetype: " .. result.usagetype)
                 ngx.say("addresstype: " .. result.addresstype)
                 ngx.say("category: " .. result.category)
+                ngx.say("district: " .. result.district)
+                ngx.say("asn: " .. result.asn)
+                ngx.say("as: " .. result.as)
                 ip2loc:close()
             }
         }
