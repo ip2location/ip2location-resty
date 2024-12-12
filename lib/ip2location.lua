@@ -139,7 +139,7 @@ local district_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 local asn_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24}
 local as_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25}
 
-local api_version = "8.7.0"
+local api_version = "8.7.1"
 
 local modes = {
   countryshort = 0x0000001,
@@ -175,6 +175,7 @@ local invalid_address = "Invalid IP address."
 local missing_file = "Invalid database file."
 local not_supported = "This parameter is unavailable for selected data file. Please upgrade the data file."
 local invalid_bin = "Incorrect IP2Location BIN file format. Please make sure that you are using the latest IP2Location BIN file."
+local ipv6_not_supported = "IPv6 address missing in IPv4 BIN."
 
 -- for debugging purposes
 -- local function printme(stuff)
@@ -186,6 +187,14 @@ local invalid_bin = "Incorrect IP2Location BIN file format. Please make sure tha
 -- local inspect = require('inspect')
 -- return (inspect(stuff))
 -- end
+
+--local function printx(x)
+--  print("0x"..bit.tohex(x))
+--end
+
+local function printxstr(x)
+  return ("0x"..bit.tohex(x))
+end
 
 -- read row
 local function readrow(myfile, pos, len)
@@ -477,7 +486,7 @@ end
 function ip2location:checkip(ip)
   local R = {ERROR = 0, IPV4 = 4, IPV6 = 6}
   if type(ip) ~= "string" then return R.ERROR end
-
+  
   -- if not false then res returns uint32_t type integer
   local res = ipmatcher.parse_ipv4(ip)
   if res ~= false then
@@ -552,7 +561,8 @@ function ip2location:checkip(ip)
     elseif ipnum >= from_teredo and ipnum <= to_teredo then -- Teredo
       override = 1
       ipnum2 = bit.bnot(teredopart)
-      ipnum = bn.new(ipnum2) -- convert back to bn
+      ipnum3 = printxstr(ipnum2):sub(3) -- to get unsigned hex without the "Ox"
+      ipnum = bn.from_hex(ipnum3)
     end
 
     local ipindex = 0;
@@ -657,6 +667,11 @@ function ip2location:query(ipaddress, mode)
     maxip = max_ipv4_range
     colsize = self.ipv4columnsize
   else
+    if self.ipv6databasecount == 0 then
+      local result = ip2locationrecord:loadmessage(ipv6_not_supported)
+      -- printme(result)
+      return result
+    end
     firstcol = 16 -- 16 bytes for IP From    
     baseaddr = self.ipv6databaseaddr
     high = self.ipv6databasecount
@@ -682,7 +697,7 @@ function ip2location:query(ipaddress, mode)
     -- reading IP From + whole row + next IP From
     readlen = colsize + firstcol
     fullrow = readrow(self.f, rowoffset, readlen)
-
+    
     if iptype == 4 then
       ipfrom = readuint32row(0, fullrow)
       ipto = readuint32row(colsize, fullrow)

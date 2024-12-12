@@ -1,5 +1,10 @@
 # Revision history for ip2location
 
+## 8.7.1  -- 2024-12-12
+
+* Fixed error with IPv6 IP when using IPv4 BIN.
+* Fixed number overflow.
+
 ## 8.7.0  -- 2023-04-13
 
 * Added support for district, ASN and AS.
