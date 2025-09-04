@@ -66,6 +66,9 @@ http {
                 ngx.say("district: " .. result.district)
                 ngx.say("asn: " .. result.asn)
                 ngx.say("as: " .. result.as)
+                ngx.say("asdomain: " .. result.asdomain)
+                ngx.say("asusagetype: " .. result.asusagetype)
+                ngx.say("ascidr: " .. result.ascidr)
                 ip2loc:close()
             }
         }

@@ -1,5 +1,9 @@
 # Revision history for ip2location
 
+## 8.8.0  -- 2025-09-04
+
+* Added support for AS domain, AS usage type and AS CIDR.
+
 ## 8.7.1  -- 2024-12-12
 
 * Fixed error with IPv6 IP when using IPv4 BIN.

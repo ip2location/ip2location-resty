@@ -48,6 +48,9 @@ ip2location = {
   district_position_offset = 0,
   asn_position_offset = 0,
   as_position_offset = 0,
+  asdomain_position_offset = 0,
+  asusagetype_position_offset = 0,
+  ascidr_position_offset = 0,
   country_enabled = false,
   region_enabled = false,
   city_enabled = false,
@@ -71,41 +74,47 @@ ip2location = {
   category_enabled = false,
   district_enabled = false,
   asn_enabled = false,
-  as_enabled = false
+  as_enabled = false,
+  asdomain_enabled = false,
+  asusagetype_enabled = false,
+  ascidr_enabled = false,
 }
 ip2location.__index = ip2location
 
 ip2locationrecord = {
-  country_short = '',
-  country_long = '',
-  region = '',
-  city = '',
-  isp = '',
+  country_short = "",
+  country_long = "",
+  region = "",
+  city = "",
+  isp = "",
   latitude = 0.0,
   longitude = 0.0,
-  domain = '',
-  zipcode = '',
-  timezone = '',
-  netspeed = '',
-  iddcode = '',
-  areacode = '',
-  weatherstationcode = '',
-  weatherstationname = '',
-  mcc = '',
-  mnc = '',
-  mobilebrand = '',
+  domain = "",
+  zipcode = "",
+  timezone = "",
+  netspeed = "",
+  iddcode = "",
+  areacode = "",
+  weatherstationcode = "",
+  weatherstationname = "",
+  mcc = "",
+  mnc = "",
+  mobilebrand = "",
   elevation = 0,
-  usagetype = '',
-  addresstype = '',
-  category = '',
-  district = '',
-  asn = '',
-  as = ''
+  usagetype = "",
+  addresstype = "",
+  category = "",
+  district = "",
+  asn = "",
+  as = "",
+  asdomain = "",
+  asusagetype = "",
+  ascidr = "",
 }
 ip2locationrecord.__index = ip2locationrecord
 
 local max_ipv4_range = bn.from_dec("4294967295")
-local max_ipv6_range= bn.from_dec("340282366920938463463374607431768211455")
+local max_ipv6_range = bn.from_dec("340282366920938463463374607431768211455")
 local from_v4mapped = bn.from_dec("281470681743360")
 local to_v4mapped = bn.from_dec("281474976710655")
 local from_6to4 = bn.from_dec("42545680458834377588178886921629466624")
@@ -114,32 +123,37 @@ local from_teredo = bn.from_dec("42540488161975842760550356425300246528")
 local to_teredo = bn.from_dec("42540488241204005274814694018844196863")
 local excess = bn.from_hex("FFFFFFFF00000000")
 
-local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
-local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
-local city_position = {0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
-local isp_position = {0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9, 0, 9, 0, 9, 7, 9, 0, 9, 7, 9, 9, 9}
-local latitude_position = {0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
-local longitude_position = {0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
-local domain_position = {0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10, 0, 10, 0, 10, 8, 10, 0, 10, 8, 10, 10, 10}
-local zipcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7, 7, 7, 0, 7, 0, 7, 7, 7, 0, 7, 7, 7}
-local timezone_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8, 8, 8, 7, 8, 0, 8, 8, 8, 0, 8, 8, 8}
-local netspeed_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11,0, 11,8, 11, 0, 11, 0, 11, 0, 11, 11, 11}
-local iddcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 0, 12, 0, 12, 9, 12, 0, 12, 12, 12}
-local areacode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10 ,13 ,0, 13, 0, 13, 10, 13, 0, 13, 13, 13}
-local weatherstationcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 14, 0, 14, 0, 14, 0, 14, 14, 14}
-local weatherstationname_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 15, 0, 15, 0, 15, 0, 15, 15, 15}
-local mcc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 16, 0, 16, 9, 16, 16, 16}
-local mnc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10,17, 0, 17, 10, 17, 17, 17}
-local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,18, 0, 18, 11, 18, 18, 18}
-local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19, 19, 19}
-local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20, 20, 20}
-local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 21}
-local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 22}
-local district_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23}
-local asn_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24}
-local as_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25}
+local country_position = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }
+local region_position = { 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 }
+local city_position = { 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 }
+local isp_position = { 0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9, 0, 9, 0, 9, 7, 9, 0, 9, 7, 9, 9, 9 }
+local latitude_position = { 0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }
+local longitude_position = { 0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 }
+local domain_position = { 0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10, 0, 10, 0, 10, 0, 10, 8, 10, 0, 10, 8, 10, 10, 10 }
+local zipcode_position = { 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7, 7, 7, 0, 7, 0, 7, 7, 7, 0, 7, 7, 7 }
+local timezone_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8, 8, 8, 7, 8, 0, 8, 8, 8, 0, 8, 8, 8 }
+local netspeed_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11, 0, 11, 8, 11, 0, 11, 0, 11, 0, 11, 11, 11 }
+local iddcode_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 0, 12, 0, 12, 9, 12, 0, 12, 12, 12 }
+local areacode_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 13, 0, 13, 0, 13, 10, 13, 0, 13, 13, 13 }
+local weatherstationcode_position =
+{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 14, 0, 14, 0, 14, 0, 14, 14, 14 }
+local weatherstationname_position =
+{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 15, 0, 15, 0, 15, 0, 15, 15, 15 }
+local mcc_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 16, 0, 16, 9, 16, 16, 16 }
+local mnc_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 17, 0, 17, 10, 17, 17, 17 }
+local mobilebrand_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 18, 0, 18, 11, 18, 18, 18 }
+local elevation_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19, 19, 19 }
+local usagetype_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20, 20, 20 }
+local addresstype_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 21 }
+local category_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 22 }
+local district_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23 }
+local asn_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24 }
+local as_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25 }
+local asdomain_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26 }
+local asusagetype_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27 }
+local ascidr_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28 }
 
-local api_version = "8.7.1"
+local api_version = "8.8.0"
 
 local modes = {
   countryshort = 0x0000001,
@@ -166,15 +180,48 @@ local modes = {
   category = 0x0200000,
   district = 0x0400000,
   asn = 0x0800000,
-  as = 0x1000000
+  as = 0x1000000,
+  asdomain = 0x2000000,
+  asusagetype = 0x4000000,
+  ascidr = 0x8000000,
 }
 
-modes.all = bit.bor(modes.countryshort, modes.countrylong, modes.region, modes.city, modes.isp, modes.latitude, modes.longitude, modes.domain, modes.zipcode, modes.timezone, modes.netspeed, modes.iddcode, modes.areacode, modes.weatherstationcode, modes.weatherstationname, modes.mcc, modes.mnc, modes.mobilebrand, modes.elevation, modes.usagetype, modes.addresstype, modes.category, modes.district, modes.asn, modes.as)
+modes.all = bit.bor(
+  modes.countryshort,
+  modes.countrylong,
+  modes.region,
+  modes.city,
+  modes.isp,
+  modes.latitude,
+  modes.longitude,
+  modes.domain,
+  modes.zipcode,
+  modes.timezone,
+  modes.netspeed,
+  modes.iddcode,
+  modes.areacode,
+  modes.weatherstationcode,
+  modes.weatherstationname,
+  modes.mcc,
+  modes.mnc,
+  modes.mobilebrand,
+  modes.elevation,
+  modes.usagetype,
+  modes.addresstype,
+  modes.category,
+  modes.district,
+  modes.asn,
+  modes.as,
+  modes.asdomain,
+  modes.asusagetype,
+  modes.ascidr
+)
 
 local invalid_address = "Invalid IP address."
 local missing_file = "Invalid database file."
 local not_supported = "This parameter is unavailable for selected data file. Please upgrade the data file."
-local invalid_bin = "Incorrect IP2Location BIN file format. Please make sure that you are using the latest IP2Location BIN file."
+local invalid_bin =
+"Incorrect IP2Location BIN file format. Please make sure that you are using the latest IP2Location BIN file."
 local ipv6_not_supported = "IPv6 address missing in IPv4 BIN."
 
 -- for debugging purposes
@@ -193,7 +240,7 @@ local ipv6_not_supported = "IPv6 address missing in IPv4 BIN."
 --end
 
 local function printxstr(x)
-  return ("0x"..bit.tohex(x))
+  return ("0x" .. bit.tohex(x))
 end
 
 -- read row
@@ -303,7 +350,7 @@ local function readstr(pos, myfile)
     strlen = string.byte(len)
   end
   local bytestr = data:sub(2, (strlen + 1))
-  local value = ''
+  local value = ""
   if bytestr ~= nil then
     value = bytestr
   end
@@ -325,7 +372,7 @@ end
 -- initialize the component with the database path
 function ip2location:new(dbpath)
   local x = {}
-  setmetatable(x, ip2location)  -- make ip2location handle lookup
+  setmetatable(x, ip2location) -- make ip2location handle lookup
 
   local file, err = io.open(dbpath, "rb")
   if file == nil then
@@ -470,6 +517,18 @@ function ip2location:new(dbpath)
     x.as_position_offset = (as_position[dbt] - 2) * 4
     x.as_enabled = true
   end
+  if asdomain_position[dbt] ~= 0 then
+    x.asdomain_position_offset = (asdomain_position[dbt] - 2) * 4
+    x.asdomain_enabled = true
+  end
+  if asusagetype_position[dbt] ~= 0 then
+    x.asusagetype_position_offset = (asusagetype_position[dbt] - 2) * 4
+    x.asusagetype_enabled = true
+  end
+  if ascidr_position[dbt] ~= 0 then
+    x.ascidr_position_offset = (ascidr_position[dbt] - 2) * 4
+    x.ascidr_enabled = true
+  end
 
   x.metaok = true
   -- printme(x)
@@ -479,20 +538,24 @@ end
 -- close file and reset
 function ip2location:close()
   self.metaok = false
-  io.close(self.f)
+  if self.f ~= nil then
+    io.close(self.f)
+  end
 end
 
 -- get IP type and calculate IP number; calculates index too if exists
 function ip2location:checkip(ip)
-  local R = {ERROR = 0, IPV4 = 4, IPV6 = 6}
-  if type(ip) ~= "string" then return R.ERROR end
-  
+  local R = { ERROR = 0, IPV4 = 4, IPV6 = 6 }
+  if type(ip) ~= "string" then
+    return R.ERROR
+  end
+
   -- if not false then res returns uint32_t type integer
   local res = ipmatcher.parse_ipv4(ip)
   if res ~= false then
     local ipnum = bn.new(tonumber(res))
 
-    local ipindex = 0;
+    local ipindex = 0
     if self.ipv4indexed then
       ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
     end
@@ -500,17 +563,19 @@ function ip2location:checkip(ip)
   end
 
   -- check for format 1.11.111.111 for ipv4
-  local chunks = {ip:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")}
+  local chunks = { ip:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$") }
   if #chunks == 4 then
     local ipnum = bn.new(0)
     local octet = 0
-    for x,v in pairs(chunks) do
+    for x, v in pairs(chunks) do
       octet = tonumber(v)
-      if octet > 255 then return R.ERROR end
+      if octet > 255 then
+        return R.ERROR
+      end
       ipnum = ipnum + (bn.new(octet):lshift(8 * (4 - x)))
     end
 
-    local ipindex = 0;
+    local ipindex = 0
     if self.ipv4indexed then
       ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
     end
@@ -518,17 +583,19 @@ function ip2location:checkip(ip)
   end
 
   -- check for format ::FFFF:1.11.111.111 for ipv4
-  local chunks = {ip:match("^%:%:[fF][fF][fF][fF]%:(%d+)%.(%d+)%.(%d+)%.(%d+)$")}
+  local chunks = { ip:match("^%:%:[fF][fF][fF][fF]%:(%d+)%.(%d+)%.(%d+)%.(%d+)$") }
   if #chunks == 4 then
     local ipnum = bn.new(0)
     local octet = 0
-    for x,v in pairs(chunks) do
+    for x, v in pairs(chunks) do
       octet = tonumber(v)
-      if octet > 255 then return R.ERROR end
+      if octet > 255 then
+        return R.ERROR
+      end
       ipnum = ipnum + (bn.new(octet):lshift(8 * (4 - x)))
     end
 
-    local ipindex = 0;
+    local ipindex = 0
     if self.ipv4indexed then
       ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
     end
@@ -550,7 +617,7 @@ function ip2location:checkip(ip)
     if ipnum >= from_v4mapped and ipnum <= to_v4mapped then -- ipv4-mapped ipv6
       override = 1
       ipnum = ipnum - from_v4mapped
-    elseif ipnum >= from_6to4 and ipnum <= to_6to4 then  -- 6to4
+    elseif ipnum >= from_6to4 and ipnum <= to_6to4 then -- 6to4
       override = 1
       ipnum = ipnum:rshift(80)
       ipnum2 = bit.band(ipnum:to_number(), 0xffffffff)
@@ -565,7 +632,7 @@ function ip2location:checkip(ip)
       ipnum = bn.from_hex(ipnum3)
     end
 
-    local ipindex = 0;
+    local ipindex = 0
     if override == 1 then
       if self.ipv4indexed then
         ipindex = ipnum:rshift(16):lshift(3):to_number() + self.ipv4indexbaseaddr
@@ -590,7 +657,7 @@ end
 -- populate record with message
 function ip2locationrecord:loadmessage(mesg)
   local x = {}
-  setmetatable(x, ip2locationrecord)  -- make ip2locationrecord handle lookup
+  setmetatable(x, ip2locationrecord) -- make ip2locationrecord handle lookup
   x.country_short = mesg
   x.country_long = mesg
   x.region = mesg
@@ -613,15 +680,18 @@ function ip2locationrecord:loadmessage(mesg)
   x.district = mesg
   x.asn = mesg
   x.as = mesg
+  x.asdomain = mesg
+  x.asusagetype = mesg
+  x.ascidr = mesg
   return x
 end
 
 local function round(n)
-  return math.floor((math.floor(n*2) + 1)/2)
+  return math.floor((math.floor(n * 2) + 1) / 2)
 end
 
 local function roundup(num, decimalplaces)
-  local mult = 10^(decimalplaces or 0)
+  local mult = 10 ^ (decimalplaces or 0)
   return math.floor(num * mult + 0.5) / mult
 end
 
@@ -672,7 +742,7 @@ function ip2location:query(ipaddress, mode)
       -- printme(result)
       return result
     end
-    firstcol = 16 -- 16 bytes for IP From    
+    firstcol = 16 -- 16 bytes for IP From
     baseaddr = self.ipv6databaseaddr
     high = self.ipv6databasecount
     maxip = max_ipv6_range
@@ -697,7 +767,7 @@ function ip2location:query(ipaddress, mode)
     -- reading IP From + whole row + next IP From
     readlen = colsize + firstcol
     fullrow = readrow(self.f, rowoffset, readlen)
-    
+
     if iptype == 4 then
       ipfrom = readuint32row(0, fullrow)
       ipto = readuint32row(colsize, fullrow)
@@ -763,11 +833,13 @@ function ip2location:query(ipaddress, mode)
       end
 
       if (bit.band(mode, modes.weatherstationcode) ~= 0) and (self.weatherstationcode_enabled == true) then
-        result.weatherstationcode = readstr(readuint32row(self.weatherstationcode_position_offset, row):to_number(), self.f)
+        result.weatherstationcode =
+        readstr(readuint32row(self.weatherstationcode_position_offset, row):to_number(), self.f)
       end
 
       if (bit.band(mode, modes.weatherstationname) ~= 0) and (self.weatherstationname_enabled == true) then
-        result.weatherstationname = readstr(readuint32row(self.weatherstationname_position_offset, row):to_number(), self.f)
+        result.weatherstationname =
+        readstr(readuint32row(self.weatherstationname_position_offset, row):to_number(), self.f)
       end
 
       if (bit.band(mode, modes.mcc) ~= 0) and (self.mcc_enabled == true) then
@@ -783,7 +855,8 @@ function ip2location:query(ipaddress, mode)
       end
 
       if (bit.band(mode, modes.elevation) ~= 0) and (self.elevation_enabled == true) then
-        result.elevation = tonumber(readstr(readuint32row(self.elevation_position_offset, row):to_number(), self.f))
+        result.elevation =
+        tonumber(readstr(readuint32row(self.elevation_position_offset, row):to_number(), self.f))
       end
 
       if (bit.band(mode, modes.usagetype) ~= 0) and (self.usagetype_enabled == true) then
@@ -808,6 +881,18 @@ function ip2location:query(ipaddress, mode)
 
       if (bit.band(mode, modes.as) ~= 0) and (self.as_enabled == true) then
         result.as = readstr(readuint32row(self.as_position_offset, row):to_number(), self.f)
+      end
+
+      if (bit.band(mode, modes.asdomain) ~= 0) and (self.asdomain_enabled == true) then
+        result.asdomain = readstr(readuint32row(self.asdomain_position_offset, row):to_number(), self.f)
+      end
+
+      if (bit.band(mode, modes.asusagetype) ~= 0) and (self.asusagetype_enabled == true) then
+        result.asusagetype = readstr(readuint32row(self.asusagetype_position_offset, row):to_number(), self.f)
+      end
+
+      if (bit.band(mode, modes.ascidr) ~= 0) and (self.ascidr_enabled == true) then
+        result.ascidr = readstr(readuint32row(self.ascidr_position_offset, row):to_number(), self.f)
       end
 
       -- printme(result)
@@ -956,6 +1041,21 @@ end
 -- get autonomous system (AS)
 function ip2location:get_as(ipaddress)
   return self:query(ipaddress, modes.as)
+end
+
+-- get AS domain
+function ip2location:get_asdomain(ipaddress)
+  return self:query(ipaddress, modes.asdomain)
+end
+
+-- get AS usage type
+function ip2location:get_asusagetype(ipaddress)
+  return self:query(ipaddress, modes.asusagetype)
+end
+
+-- get AS CIDR
+function ip2location:get_ascidr(ipaddress)
+  return self:query(ipaddress, modes.ascidr)
 end
 
 return ip2location
