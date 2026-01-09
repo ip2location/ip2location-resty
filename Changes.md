@@ -1,5 +1,9 @@
 # Revision history for ip2location
 
+## 8.8.1  -- 2026-01-09
+
+* Changed bytes_to_int to become a local function.
+
 ## 8.8.0  -- 2025-09-04
 
 * Added support for AS domain, AS usage type and AS CIDR.

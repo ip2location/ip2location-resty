@@ -153,7 +153,7 @@ local asdomain_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local asusagetype_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27 }
 local ascidr_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28 }
 
-local api_version = "8.8.0"
+local api_version = "8.8.1"
 
 local modes = {
   countryshort = 0x0000001,
@@ -243,6 +243,14 @@ local function printxstr(x)
   return ("0x" .. bit.tohex(x))
 end
 
+local function bytes_to_int(bytearr)
+  local value = bn.new(0)
+  for i = 1, #bytearr, 1 do
+    value = value + bn.new(bytearr[i]):lshift((i - 1) * 8)
+  end
+  return value
+end
+
 -- read row
 local function readrow(myfile, pos, len)
   myfile:seek("set", pos - 1)
@@ -328,14 +336,6 @@ local function readuint128row(pos, row)
   if bytestr ~= nil then
     local bytes = { bytestr:byte(1, 16) }
     value = bytes_to_int(bytes)
-  end
-  return value
-end
-
-function bytes_to_int(bytearr)
-  local value = bn.new(0)
-  for i = 1, #bytearr, 1 do
-    value = value + bn.new(bytearr[i]):lshift((i - 1) * 8)
   end
   return value
 end
